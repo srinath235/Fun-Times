@@ -8,9 +8,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.*;
 
+import static co.uk.grocery.henrys.shoppingcart.TestUtils.getDate;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -127,10 +127,6 @@ class TwoTinsOfSoupRuleTest {
         twoTinsOfSoupRule.then(shoppingBasketRequest);
 
         assertEquals(19.8, shoppingBasketRequest.getTotalAmount());
-    }
-
-    private java.sql.Date getDate(int days) {
-        return java.sql.Date.valueOf(LocalDate.now().plusDays(days));
     }
 
     private List<Discount> createDiscount() {

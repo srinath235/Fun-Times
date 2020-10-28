@@ -5,15 +5,12 @@ import co.uk.grocery.henrys.shoppingcart.repository.DiscountRepository;
 import co.uk.grocery.henrys.shoppingcart.repository.ProductRepository;
 import co.uk.grocery.henrys.shoppingcart.repository.entity.Discount;
 import co.uk.grocery.henrys.shoppingcart.repository.entity.Product;
-import org.jeasy.rules.api.Facts;
-import org.jeasy.rules.api.Rules;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -54,12 +51,10 @@ class OnlineShoppingCartServiceTest {
         this.onlineShoppingCartService = new OnlineShoppingCartService(
                 productRepository, discountRepository,
                 scanner, discountRuleService);
-        ReflectionTestUtils.setField(this.onlineShoppingCartService, "productRepository", this.productRepository);
-        ReflectionTestUtils.setField(this.onlineShoppingCartService, "discountRepository", this.discountRepository);
     }
 
     @AfterEach
-    void setDown() {
+    void tearDown() {
         System.setOut(originalOut);
         System.setErr(originalErr);
     }
@@ -95,17 +90,21 @@ class OnlineShoppingCartServiceTest {
     void calculateShoppingBasket_whenCalled_shouldAllowQuitUerInput(String input) {
 
         when(this.scanner.next()).thenReturn(input);
-        List products = new ArrayList();
-        products.add(Product.builder().productId(1).product("Test").unit("unit").cost(new BigDecimal(1)).build());
+        List products = getProducts();
         when(this.productRepository.findAll()).thenReturn(products);
         onlineShoppingCartService.calculateShoppingBasket();
         assertTrue(outContent.toString().contains("Thank you for shopping with us!"));
     }
 
-    @Test
-    void calculateShoppingBasket_whenCalled_shouldPrintAllProducts() {
+    private List getProducts() {
         List products = new ArrayList();
         products.add(Product.builder().productId(1).product("Test").unit("unit").cost(new BigDecimal(1)).build());
+        return products;
+    }
+
+    @Test
+    void calculateShoppingBasket_whenCalled_shouldPrintAllProducts() {
+        List products = getProducts();
         when(this.productRepository.findAll()).thenReturn(products);
 
         when(this.scanner.next()).thenReturn("q");
@@ -118,8 +117,7 @@ class OnlineShoppingCartServiceTest {
     void calculateShoppingBasket_whenCalled_shouldAllowDoneUerInput(String input) {
 
         when(this.scanner.next()).thenReturn(input);
-        List products = new ArrayList();
-        products.add(Product.builder().productId(1).product("Test").unit("unit").cost(new BigDecimal(1)).build());
+        List products = getProducts();
         when(this.productRepository.findAll()).thenReturn(products);
         onlineShoppingCartService.calculateShoppingBasket();
         assertTrue(outContent.toString().contains("Total amount payable is"));
@@ -130,8 +128,7 @@ class OnlineShoppingCartServiceTest {
     void calculateShoppingBasket_whenCalled_shouldNotAllowUerInput(String input) {
 
         when(this.scanner.next()).thenReturn(input);
-        List products = new ArrayList();
-        products.add(Product.builder().productId(1).product("Test").unit("unit").cost(new BigDecimal(1)).build());
+        List products = getProducts();
         when(this.productRepository.findAll()).thenReturn(products);
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Future future = executor.submit(() -> onlineShoppingCartService.calculateShoppingBasket());
@@ -145,8 +142,7 @@ class OnlineShoppingCartServiceTest {
     @Test
     void calculateShoppingBasket_whenCalled_shouldInvokeDiscountRuleServiceMethod() {
         when(this.scanner.next()).thenReturn("d");
-        List products = new ArrayList();
-        products.add(Product.builder().productId(1).product("Test").unit("unit").cost(new BigDecimal(1)).build());
+        List products = getProducts();
         when(this.productRepository.findAll()).thenReturn(products);
         onlineShoppingCartService.calculateShoppingBasket();
         verify(this.discountRuleService, times(1)).applyDiscount(any(ShoppingBasketRequest.class));
@@ -159,8 +155,7 @@ class OnlineShoppingCartServiceTest {
         this.onlineShoppingCartService = new OnlineShoppingCartService(
                 productRepository, discountRepository,
                 scanner, discountRuleService);
-        List products = new ArrayList();
-        products.add(Product.builder().productId(1).product("Test").unit("unit").cost(new BigDecimal(1)).build());
+        List products = getProducts();
         when(this.productRepository.findAll()).thenReturn(products);
         onlineShoppingCartService.calculateShoppingBasket();
         assertTrue(errContent.toString().contains("Invalid number of units entered"));
@@ -173,8 +168,7 @@ class OnlineShoppingCartServiceTest {
         this.onlineShoppingCartService = new OnlineShoppingCartService(
                 productRepository, discountRepository,
                 scanner, discountRuleService);
-        List products = new ArrayList();
-        products.add(Product.builder().productId(1).product("Test").unit("unit").cost(new BigDecimal(1)).build());
+        List products = getProducts();
         when(this.productRepository.findAll()).thenReturn(products);
         onlineShoppingCartService.calculateShoppingBasket();
         assertFalse(errContent.toString().contains("Invalid number of units entered"));
@@ -187,8 +181,7 @@ class OnlineShoppingCartServiceTest {
         this.onlineShoppingCartService = new OnlineShoppingCartService(
                 productRepository, discountRepository,
                 scanner, discountRuleService);
-        List products = new ArrayList();
-        products.add(Product.builder().productId(1).product("Test").unit("unit").cost(new BigDecimal(1)).build());
+        List products = getProducts();
         when(this.productRepository.findAll()).thenReturn(products);
         onlineShoppingCartService.calculateShoppingBasket();
         assertTrue(errContent.toString().contains("Invalid days entered, "));
@@ -201,8 +194,7 @@ class OnlineShoppingCartServiceTest {
         this.onlineShoppingCartService = new OnlineShoppingCartService(
                 productRepository, discountRepository,
                 scanner, discountRuleService);
-        List products = new ArrayList();
-        products.add(Product.builder().productId(1).product("Test").unit("unit").cost(new BigDecimal(1)).build());
+        List products = getProducts();
         when(this.productRepository.findAll()).thenReturn(products);
         onlineShoppingCartService.calculateShoppingBasket();
         ArgumentCaptor<ShoppingBasketRequest> argumentCaptor = ArgumentCaptor.forClass(ShoppingBasketRequest.class);
@@ -218,8 +210,7 @@ class OnlineShoppingCartServiceTest {
     @Test
     void calculateShoppingBasket_whenCalled_shouldPrintTotalAmount() {
         when(this.scanner.next()).thenReturn("d");
-        List products = new ArrayList();
-        products.add(Product.builder().productId(1).product("Test").unit("unit").cost(new BigDecimal(1)).build());
+        List products = getProducts();
         when(this.productRepository.findAll()).thenReturn(products);
         when(this.discountRuleService.applyDiscount(any(ShoppingBasketRequest.class))).thenReturn(BigDecimal.valueOf(200.08));
         onlineShoppingCartService.calculateShoppingBasket();
