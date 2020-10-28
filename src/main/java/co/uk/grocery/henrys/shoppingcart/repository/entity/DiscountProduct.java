@@ -9,27 +9,22 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import java.math.BigDecimal;
 
 @Entity
-@Table(name = "PRODUCT_TBL")
+@Table(name = "DISCOUNT_PRODUCT_TBL")
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Product {
+public class DiscountProduct {
 
     @Id
-    @Column(name = "PRODUCT_ID", insertable = false, updatable = false)
+    @Column(name = "DISC_PROD_ID", insertable = false, updatable = false)
+    private Integer discountProductId;
+
+    @Column(name = "DISCOUNT_ID")
+    private Integer discountId;
+
+    @Column(name = "PRODUCT_ID")
     private Integer productId;
-
-    @Column(name = "PRODUCT")
-    private String product;
-
-    @Column(name = "UNIT")
-    private String unit;
-
-    @Column(name = "COST")
-    private BigDecimal cost;
-
 }
