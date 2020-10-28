@@ -15,7 +15,6 @@ import java.util.Scanner;
 public class OnlineShoppingCartConfig {
 
     @Bean
-    @Profile("!test")
     public Scanner scanner() {
         return new Scanner(System.in);
     }

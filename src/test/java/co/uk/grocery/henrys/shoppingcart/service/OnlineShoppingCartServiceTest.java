@@ -5,23 +5,28 @@ import co.uk.grocery.henrys.shoppingcart.repository.DiscountRepository;
 import co.uk.grocery.henrys.shoppingcart.repository.ProductRepository;
 import co.uk.grocery.henrys.shoppingcart.repository.entity.Discount;
 import co.uk.grocery.henrys.shoppingcart.repository.entity.Product;
+import org.jeasy.rules.api.Facts;
+import org.jeasy.rules.api.Rules;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.sql.Date;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.*;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class OnlineShoppingCartServiceTest {
@@ -145,6 +150,69 @@ class OnlineShoppingCartServiceTest {
         when(this.productRepository.findAll()).thenReturn(products);
         onlineShoppingCartService.calculateShoppingBasket();
         verify(this.discountRuleService, times(1)).applyDiscount(any(ShoppingBasketRequest.class));
+    }
+
+    @Test
+    void calculateShoppingBasket_whenCalled_shouldNotAllowInvalidUnitValue() {
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream("1\nq\nq\n".getBytes());
+        this.scanner = new Scanner(byteArrayInputStream);
+        this.onlineShoppingCartService = new OnlineShoppingCartService(
+                productRepository, discountRepository,
+                scanner, discountRuleService);
+        List products = new ArrayList();
+        products.add(Product.builder().productId(1).product("Test").unit("unit").cost(new BigDecimal(1)).build());
+        when(this.productRepository.findAll()).thenReturn(products);
+        onlineShoppingCartService.calculateShoppingBasket();
+        assertTrue(errContent.toString().contains("Invalid number of units entered"));
+    }
+
+    @Test
+    void calculateShoppingBasket_whenCalled_shouldAllowValidUnitValue() {
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream("1\n2\nq\n".getBytes());
+        this.scanner = new Scanner(byteArrayInputStream);
+        this.onlineShoppingCartService = new OnlineShoppingCartService(
+                productRepository, discountRepository,
+                scanner, discountRuleService);
+        List products = new ArrayList();
+        products.add(Product.builder().productId(1).product("Test").unit("unit").cost(new BigDecimal(1)).build());
+        when(this.productRepository.findAll()).thenReturn(products);
+        onlineShoppingCartService.calculateShoppingBasket();
+        assertFalse(errContent.toString().contains("Invalid number of units entered"));
+    }
+
+    @Test
+    void calculateShoppingBasket_whenCalled_shouldNotAllowInValidDayValue() {
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream("1\n2\nd\ns\n".getBytes());
+        this.scanner = new Scanner(byteArrayInputStream);
+        this.onlineShoppingCartService = new OnlineShoppingCartService(
+                productRepository, discountRepository,
+                scanner, discountRuleService);
+        List products = new ArrayList();
+        products.add(Product.builder().productId(1).product("Test").unit("unit").cost(new BigDecimal(1)).build());
+        when(this.productRepository.findAll()).thenReturn(products);
+        onlineShoppingCartService.calculateShoppingBasket();
+        assertTrue(errContent.toString().contains("Invalid days entered, "));
+    }
+
+    @Test
+    void calculateShoppingBasket_whenCalled_shouldInvokeDiscountServiceMethod() {
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream("1\n2\nd\n0\n".getBytes());
+        this.scanner = new Scanner(byteArrayInputStream);
+        this.onlineShoppingCartService = new OnlineShoppingCartService(
+                productRepository, discountRepository,
+                scanner, discountRuleService);
+        List products = new ArrayList();
+        products.add(Product.builder().productId(1).product("Test").unit("unit").cost(new BigDecimal(1)).build());
+        when(this.productRepository.findAll()).thenReturn(products);
+        onlineShoppingCartService.calculateShoppingBasket();
+        ArgumentCaptor<ShoppingBasketRequest> argumentCaptor = ArgumentCaptor.forClass(ShoppingBasketRequest.class);
+        verify(discountRuleService).applyDiscount(argumentCaptor.capture());
+        ShoppingBasketRequest shoppingBasketRequest = argumentCaptor.getValue();
+        assertAll(() -> {
+            assertEquals("1", shoppingBasketRequest.getAddedItems().get(0).getProductId());
+            assertEquals(2, shoppingBasketRequest.getAddedItems().get(0).getNumberOfUnits());
+            assertEquals(java.sql.Date.valueOf(LocalDate.now()), shoppingBasketRequest.getBoughtDate());
+        });
     }
 
     @Test

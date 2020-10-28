@@ -62,10 +62,14 @@ public class OnlineShoppingCartService {
                     System.err.println("Invalid product selection, " + input);
                 }
             }
-            System.out.println("When do you want to buy it from (today (0)/in 5 days time (+5)/in 30 days time(+30))");
-            int numberOfDaysFrom = scanner.nextInt();
-            shoppingBasketRequest.setBoughtDate(java.sql.Date.valueOf(LocalDate.now().plusDays(numberOfDaysFrom)));
-            System.out.println("Total amount payable is £" + discountRuleService.applyDiscount(shoppingBasketRequest));
+            System.out.println("When do you want to buy it from (today (0)/yesterday (-1)/in 5 days time (5)/in 30 days time(+30))");
+            try {
+                int numberOfDaysFrom = scanner.nextInt();
+                shoppingBasketRequest.setBoughtDate(java.sql.Date.valueOf(LocalDate.now().plusDays(numberOfDaysFrom)));
+                System.out.println("Total amount payable is £" + discountRuleService.applyDiscount(shoppingBasketRequest));
+            } catch (InputMismatchException ime) {
+                System.err.println("Invalid days entered, " + scanner.next());
+            }
         } else {
             System.err.println("Products are empty");
         }

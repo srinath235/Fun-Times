@@ -117,6 +117,18 @@ class TwoTinsOfSoupRuleTest {
         assertEquals(20, shoppingBasketRequest.getTotalAmount());
     }
 
+    @Test
+    void then_shouldApplyDiscount_whenLoavesAreLess() {
+        List<AddedItem> addedItems = createAddedItems();
+        addedItems.get(0).setNumberOfUnits(20);
+        addedItems.get(1).setNumberOfUnits(2);
+        ShoppingBasketRequest shoppingBasketRequest = ShoppingBasketRequest.builder().addedItems(addedItems).totalAmount(20.0).build();
+
+        twoTinsOfSoupRule.then(shoppingBasketRequest);
+
+        assertEquals(19.8, shoppingBasketRequest.getTotalAmount());
+    }
+
     private java.sql.Date getDate(int days) {
         return java.sql.Date.valueOf(LocalDate.now().plusDays(days));
     }
