@@ -82,4 +82,10 @@ jacocoTestCoverageVerification {
     }
 }
 
+jar {
+    manifest {
+        attributes 'Main-Class': 'co.uk.grocery.henrys.shoppingcart.OnlineShoppingCartApplication'
+    }
+}
+
 
